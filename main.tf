@@ -185,7 +185,7 @@ resource "aws_instance" "web" {
     cat > /etc/cron.daily/apache-log-s3 << 'CRON'
     #!/bin/bash
     DATE=$(date +%Y-%m-%d)
-    aws s3 cp /var/log/httpd/access_log s3://${aws_s3_bucket.logs.bucket}/\$DATE/access.log
+    sudo aws s3 cp /var/log/httpd/access_log s3://${aws_s3_bucket.logs.bucket}/\$DATE/access.log
     CRON
 
     chmod +x /etc/cron.daily/apache-log-s3
