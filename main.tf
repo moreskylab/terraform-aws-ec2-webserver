@@ -102,8 +102,69 @@ resource "aws_s3_bucket_public_access_block" "logs" {
   restrict_public_buckets = true
 }
 
+# Create the IAM Policy Document
+data "aws_iam_policy_document" "ec2_s3_upload_policy" {
+  statement {
+    sid = "AllowEC2ToUploadLogs"
+    actions = [
+      "s3:PutObject",
+    ]
+    resources = [
+      "arn:aws:s3:::your-log-bucket-name/*", # Replace with your S3 bucket name
+    ]
+  }
+
+  statement {
+    sid = "AllowEC2ToListBucket"
+    actions = [
+      "s3:ListBucket",
+    ]
+    resources = [
+      "arn:aws:s3:::your-log-bucket-name", # Replace with your S3 bucket name
+    ]
+  }
+}
+
+# Create the IAM Policy
+resource "aws_iam_policy" "ec2_s3_upload_policy" {
+  name        = "EC2S3UploadLogsPolicy" # Give your policy a descriptive name
+  policy = data.aws_iam_policy_document.ec2_s3_upload_policy.json
+}
+
+# Create an IAM Role and Attach the Policy
+resource "aws_iam_role" "ec2_s3_uploader_role" {
+  name = "EC2S3UploaderRole" # Give your role a descriptive name
+
+  assume_role_policy = <<EOF
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "ec2.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+EOF
+}
+
+resource "aws_iam_role_policy_attachment" "ec2_s3_upload_attachment" {
+  role       = aws_iam_role.ec2_s3_uploader_role.name
+  policy_arn = aws_iam_policy.ec2_s3_upload_policy.arn
+}
+
+# Create an IAM Instance Profile (If attaching to an existing EC2 instance)
+resource "aws_iam_instance_profile" "ec2_s3_uploader_profile" {
+  name = "EC2S3UploaderProfile"
+  role = aws_iam_role.ec2_s3_uploader_role.name
+}
+
 # Create an EC2 instance
 resource "aws_instance" "web" {
+  iam_instance_profile   = aws_iam_instance_profile.ec2_s3_uploader_profile.name # For existing instances
   ami                    = "ami-0d03cb826412c6b0f"  # Amazon Linux 2 AMI
   instance_type          = "t2.micro"
   subnet_id              = aws_subnet.public.id
