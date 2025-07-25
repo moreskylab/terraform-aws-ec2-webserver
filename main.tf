@@ -110,8 +110,7 @@ data "aws_iam_policy_document" "ec2_s3_upload_policy" {
       "s3:PutObject",
     ]
     resources = [
-      # "arn:aws:s3:::${aws_s3_bucket.logs.bucket}/*", # Replace with your S3 bucket name
-      "${aws_s3_bucket.logs.arn}/*", # Replace with your S3 bucket name
+      "${aws_s3_bucket.logs.arn}/*", # Replace with your S3 bucket arn name
     ]
   }
 
@@ -121,8 +120,7 @@ data "aws_iam_policy_document" "ec2_s3_upload_policy" {
       "s3:ListBucket",
     ]
     resources = [
-      # "arn:aws:s3:::${aws_s3_bucket.logs.bucket}", # Replace with your S3 bucket name
-      "${aws_s3_bucket.logs.arn}", # Replace with your S3 bucket name
+      "${aws_s3_bucket.logs.arn}", # Replace with your S3 bucket arn name
     ]
   }
 }
